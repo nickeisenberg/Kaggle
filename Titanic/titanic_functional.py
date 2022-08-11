@@ -1,4 +1,4 @@
-# Sequntial Method 
+# Functional Method
 
 import numpy as np
 import pandas as pd
@@ -29,11 +29,11 @@ inp_test = sc.fit_transform(test_data)
 from tensorflow import keras
 from tensorflow.keras import layers
 
-model = keras.Sequential([
-    layers.Dense(3, activation='relu'),
-    layers.Dense(2, activation='relu'),
-    layers.Dense(1, activation='sigmoid')
-])
+inputs = keras.Input(shape=(5,), name='my_input')
+features = layers.Dense(3, activation='relu')(inputs)
+features = layers.Dense(2, activation='relu')(features)
+output = layers.Dense(1, activation='sigmoid')(features)
+model = keras.Model(inputs=inputs, outputs=output)
 
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
@@ -57,7 +57,7 @@ for x in answers_data['Check']:
         rounding.append(1)
 
 answers_data['final'] = pd.Series(rounding)
-answers_data.to_csv('final_sequential.csv')
+answers_data.to_csv('final_functional.csv')
 
 match = 0
 nomatch = 0
@@ -70,3 +70,4 @@ for val in answers_data.values:
     count += 1
 
 print(f'The proportion of correct guesses is {match / count}')
+
