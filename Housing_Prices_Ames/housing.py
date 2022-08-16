@@ -1,3 +1,5 @@
+# unfinished...
+
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
@@ -26,14 +28,15 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 model = keras.Sequential([
-    layers.Dense(64, activation='relu'),
-    layers.Dense(64, activation='relu'),
+    layers.Dense(200, activation='relu'),
+    layers.Dense(100, activation='relu'),
+    layers.Dense(50, activation='relu'),
     layers.Dense(1)
 ])
 
 model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
 
-model.fit(inp_train, out_train, batch_size=15, epochs=200)
+model.fit(inp_train, out_train, batch_size=15, epochs=100)
 
 predictions = model.predict(test_data).tolist()
 predictions = pd.Series(predictions)
