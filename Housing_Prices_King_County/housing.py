@@ -79,3 +79,8 @@ print('MSE: ',mean_squared_error(y_test,predictions))
 print('RMSE: ',np.sqrt(mean_squared_error(y_test,predictions)))
 print('Variance Regression Score: ',explained_variance_score(y_test,predictions))
 print('\n\nDescriptive Statistics:\n',df['price'].describe())
+
+results = pd.DataFrame()
+results['Actual'] = pd.Series(y_test)
+results['Prediticion'] = pd.Series(predictions.tolist())
+results.to_csv('FinalResults.csv')
