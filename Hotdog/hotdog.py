@@ -9,7 +9,7 @@ train_hot = []
 for images in os.listdir('train/hot_dog'):
     name = ''.join(['train/hot_dog/', images])
     img = load_img(name)
-    img = smart_resize(img, (32,32))
+    img = smart_resize(img, (100,100))
     img = np.asarray(img)
     dim1, dim2 = img.shape[0], img.shape[1]
     img = img.reshape((dim1 * dim2, 3))
@@ -20,7 +20,7 @@ train_nothot = []
 for images in os.listdir('train/not_hot_dog'):
     name = ''.join(['train/not_hot_dog/', images])
     img = load_img(name)
-    img = smart_resize(img, (32, 32))
+    img = smart_resize(img, (100, 100))
     img = np.asarray(img)
     dim1, dim2 = img.shape[0], img.shape[1]
     img = img.reshape((dim1 * dim2, 3))
@@ -54,7 +54,7 @@ test_hot = []
 for images in os.listdir('test/hot_dog'):
     name = ''.join(['test/hot_dog/', images])
     img = load_img(name)
-    img = smart_resize(img, (32,32))
+    img = smart_resize(img, (100, 100))
     img = np.asarray(img)
     dim1, dim2 = img.shape[0], img.shape[1]
     img = img.reshape((dim1 * dim2, 3))
@@ -65,7 +65,7 @@ test_nothot = []
 for images in os.listdir('test/not_hot_dog'):
     name = ''.join(['test/not_hot_dog/', images])
     img = load_img(name)
-    img = smart_resize(img, (32, 32))
+    img = smart_resize(img, (100, 100))
     img = np.asarray(img)
     dim1, dim2 = img.shape[0], img.shape[1]
     img = img.reshape((dim1 * dim2, 3))
