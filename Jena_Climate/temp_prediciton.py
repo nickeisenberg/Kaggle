@@ -1,3 +1,8 @@
+'''
+Data set from:
+https://www.kaggle.com/datasets/stytch16/jena-climate-2009-2016?resource=download&select=jena_climate_2009_2016.csv
+'''
+
 from sys import exit
 import pandas as pd
 import numpy as np
@@ -63,4 +68,3 @@ test_dataset = timeseries_dataset_from_array(
     batch_size=batch_size,
     start_index=num_train_samples + num_val_samples)
 
-inps, tars = train_dataset
