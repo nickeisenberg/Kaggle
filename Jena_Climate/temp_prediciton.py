@@ -47,7 +47,7 @@ train_dataset = timeseries_dataset_from_array(
     targets=temperature[delay:],
     sampling_rate=sampling_rate,
     sequence_length=sequence_length,
-    shuffle=False,
+    shuffle=True,
     batch_size=batch_size,
     start_index=0,
     end_index=num_train_samples)
@@ -65,7 +65,7 @@ val_dataset = timeseries_dataset_from_array(
     targets=temperature[delay:],
     sampling_rate=sampling_rate,
     sequence_length=sequence_length,
-    shuffle=False,
+    shuffle=True,
     batch_size=batch_size,
     start_index=num_train_samples,
     end_index=num_train_samples + num_val_samples)
@@ -75,7 +75,7 @@ test_dataset = timeseries_dataset_from_array(
     targets=temperature[delay:],
     sampling_rate=sampling_rate,
     sequence_length=sequence_length,
-    shuffle=False,
+    shuffle=True,
     batch_size=batch_size,
     start_index=num_train_samples + num_val_samples)
 
@@ -96,7 +96,68 @@ def baseline(dataset):
         samples_seen += inps.shape[0]
     return total_abs_error / samples_seen
 
-print(f'Validation MAE: {baseline(val_dataset)}')
-print(f'Test MAE: {baseline(test_dataset)}')
+print(f'Baseline Validation MAE: {baseline(val_dataset)}')
+print(f'Baseline Test MAE: {baseline(test_dataset)}')
 
+from tensorflow import keras
+from tensorflow.keras import layers
+
+# basic model
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.Flatten()(inputs)
+x = layers.Dense(16, activation='relu')(x)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint('jena_dense.keras',
+                                    save_best_only=True)
+]
+model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
+history = model.fit(train_dataset,
+                    epochs=10,
+                    validation_data=val_dataset,
+                    callbacks=callbacks)
+model = keras.models.load_model('jena_dense.keras')
+
+print(f'Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
+
+loss = history.history['mae']
+val_loss = history.history['val_mae']
+epochs = range(1, len(loss) + 1)
+plt.figure()
+plt.plot(epochs, loss, 'bo', label='training MAE')
+plt.plot(epochs, val_loss, 'b', label='validation MAE')
+plt.title('Dense layer model')
+plt.legend()
+plt.show()
+
+# lstm model
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.LSTM(16)(inputs)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint('jena_lstm.keras',
+                                    save_best_only=True)
+]
+
+model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
+history = model.fit(train_dataset,
+                    epochs=10,
+                    validation_data=val_dataset,
+                    callbacks=callbacks)
+model = keras.models.load_model('jena_lstm.keras')
+print(f'Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
+
+loss = history.history['mae']
+val_loss = history.history['val_mae']
+epochs = range(1, len(loss) + 1)
+plt.figure()
+plt.plot(epochs, loss, 'bo', label='Training MAE')
+plt.plot(epochs, val_loss, 'b', label='Validation MAE')
+plt.title('LSTM model')
+plt.legend()
+plt.show()
 

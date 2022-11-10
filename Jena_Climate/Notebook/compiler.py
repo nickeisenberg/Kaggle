@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from sys import exit
+import matplotlib.pyplot as plt
+
 
 path = '/Users/nickeisenberg/GitRepos/Kaggle/Jena_Climate/DataSet/jena_climate_2009_2016_.csv'
 df = pd.read_csv(path)
