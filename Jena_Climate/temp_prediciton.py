@@ -8,6 +8,7 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 from tensorflow.keras.utils import timeseries_dataset_from_array
+from copy import deepcopy
 
 path_to_data = '/Users/nickeisenberg/GitRepos/Kaggle/Jena_Climate/DataSet/jena_climate_2009_2016_.csv'
 
@@ -21,7 +22,7 @@ temperature = climate_df['T (degC)'].values
 # ax[1].plot(temperature[:1440])
 # plt.show()
 
-raw_data = climate_df.values
+raw_data = deepcopy(climate_df.values)
 
 num_train_samples = int(.5 * len(raw_data))
 num_val_samples = int(.25 * len(raw_data))
