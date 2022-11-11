@@ -120,7 +120,7 @@ history = model.fit(train_dataset,
                     callbacks=callbacks)
 model = keras.models.load_model('jena_dense.keras')
 
-print(f'Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
+print(f'Dense model Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
 
 loss = history.history['mae']
 val_loss = history.history['val_mae']
@@ -132,14 +132,14 @@ plt.title('Dense layer model')
 plt.legend()
 plt.show()
 
-# lstm model
+# lstm model no dropout
 inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
 x = layers.LSTM(16)(inputs)
 outputs = layers.Dense(1)(x)
 model = keras.Model(inputs, outputs)
 
 callbacks = [
-    keras.callbacks.ModelCheckpoint('jena_lstm.keras',
+    keras.callbacks.ModelCheckpoint('jena_lstm_nodropout.keras',
                                     save_best_only=True)
 ]
 
@@ -148,8 +148,8 @@ history = model.fit(train_dataset,
                     epochs=10,
                     validation_data=val_dataset,
                     callbacks=callbacks)
-model = keras.models.load_model('jena_lstm.keras')
-print(f'Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
+model = keras.models.load_model('jena_lstm_nodropout.keras')
+print(f'LSTM model (no dropout) Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
 
 loss = history.history['mae']
 val_loss = history.history['val_mae']
@@ -157,7 +157,37 @@ epochs = range(1, len(loss) + 1)
 plt.figure()
 plt.plot(epochs, loss, 'bo', label='Training MAE')
 plt.plot(epochs, val_loss, 'b', label='Validation MAE')
-plt.title('LSTM model')
+plt.title('LSTM model (no dropout)')
 plt.legend()
 plt.show()
 
+# lstm model dropout
+inputs = keras.Input(shape=(sequence_length, raw_data.shape[-1]))
+x = layers.LSTM(32, recurrent_dropout=.25, return_sequences=True)(inputs)
+x = layers.LSTM(32, recurrent_dropout=.25)(x)
+x = layers.Dropout(.5)(x)
+outputs = layers.Dense(1)(x)
+model = keras.Model(inputs, outputs)
+
+callbacks = [
+    keras.callbacks.ModelCheckpoint('jena_lstm_dropout.keras',
+                                    save_best_only=True)
+]
+
+model.compile(optimizer='rmsprop', loss='mse', metrics=['mae'])
+history = model.fit(train_dataset,
+                    epochs=50,
+                    validation_data=val_dataset,
+                    callbacks=callbacks)
+model = keras.models.load_model('jena_lstm_dropout.keras')
+print(f'LSTM model (with dropout) Test MAE: {model.evaluate(test_dataset)[1] : .2f}')
+
+loss = history.history['mae']
+val_loss = history.history['val_mae']
+epochs = range(1, len(loss) + 1)
+plt.figure()
+plt.plot(epochs, loss, 'bo', label='Training MAE')
+plt.plot(epochs, val_loss, 'b', label='Validation MAE')
+plt.title('LSTM model (dropout)')
+plt.legend()
+plt.show()
