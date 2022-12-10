@@ -1,3 +1,5 @@
+# This needs to be done with CNNs
+
 from tensorflow.keras.preprocessing.image import load_img, smart_resize
 import os
 from os import listdir
