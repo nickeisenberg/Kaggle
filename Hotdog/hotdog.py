@@ -1,86 +1,151 @@
-# This needs to be done with CNNs
-
-from tensorflow.keras.preprocessing.image import load_img, smart_resize
+from tensorflow.keras.preprocessing.image import load_img
 import os
-from os import listdir
 import numpy as np
+import matplotlib.pyplot as plt
 from tensorflow import keras
-from tensorflow.keras import layers
+from keras import layers
 
-train_hot = []
-for images in os.listdir('train/hot_dog'):
-    name = ''.join(['train/hot_dog/', images])
-    img = load_img(name)
-    img = smart_resize(img, (100,100))
-    img = np.asarray(img)
-    dim1, dim2 = img.shape[0], img.shape[1]
-    img = img.reshape((dim1 * dim2, 3))
-    img = img.astype('float32') / 255
-    train_hot.append(img)
+#|%%--%%| <qbobvZ9rEG|jn1whacKxL>
+r"""°°°
+# Load and reshape the jpg images for training.
+°°°"""
+#|%%--%%| <jn1whacKxL|JjygWtE4uf>
 
-train_nothot = []
-for images in os.listdir('train/not_hot_dog'):
-    name = ''.join(['train/not_hot_dog/', images])
-    img = load_img(name)
-    img = smart_resize(img, (100, 100))
-    img = np.asarray(img)
-    dim1, dim2 = img.shape[0], img.shape[1]
-    img = img.reshape((dim1 * dim2, 3))
-    img = img.astype('float32') / 255
-    train_nothot.append(img)
+path_train_hd = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/train/hot_dog/'
+hd_train_imgs = []
+for img_name in os.listdir(path_train_hd):
+    img = load_img(path_train_hd + img_name).resize((180, 180))
+    hd_train_imgs.append(np.array(img, dtype='uint8') / 255.)
+hd_train_imgs = np.array(hd_train_imgs)
 
-train = np.array(train_hot + train_nothot)
-train = train.reshape((train.shape[0], train.shape[1] * train.shape[2]))
+path_train_nhd = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/train/not_hot_dog/'
+nhd_train_imgs = []
+for img_name in os.listdir(path_train_nhd):
+    img = load_img(path_train_nhd + img_name).resize((180, 180))
+    nhd_train_imgs.append(np.array(img, dtype='uint8') / 255.)
+nhd_train_imgs = np.array(nhd_train_imgs)
 
-train_labels = np.zeros(train.shape[0])
-# train_labels = np.array([1])
-for i in range(len(train_hot) - 1):
-    # train_labels = np.vstack((train_labels, np.ones(1)))
-    train_labels[i] = 1
+#|%%--%%| <JjygWtE4uf|yJUIH5E2kK>
 
-# for i in range(len(train_nothot)):
-#     train_labels = np.vstack((train_labels, np.zeros(1)))
+hd_train_imgs.shape
+nhd_train_imgs.shape
 
-inputs = keras.Input(shape=(train.shape[1],), name='inputs')
-feature = layers.Dense(512, activation='relu')(inputs)
-outputs = layers.Dense(1, activation='sigmoid')(feature)
-model = keras.Model(inputs=inputs, outputs=outputs)
 
-model.compile(optimizer='rmsprop',
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
+#|%%--%%| <yJUIH5E2kK|sZG31shZjK>
+r"""°°°
+# We need to create labels
+°°°"""
+#|%%--%%| <sZG31shZjK|5Qe1299RO7>
 
-model.fit(train, train_labels, epochs=10, batch_size=128)
+labels = np.zeros(hd_train_imgs.shape[0] + nhd_train_imgs.shape[0])
+labels[: hd_train_imgs.shape[0]] = 1
 
-test_hot = []
-for images in os.listdir('test/hot_dog'):
-    name = ''.join(['test/hot_dog/', images])
-    img = load_img(name)
-    img = smart_resize(img, (100, 100))
-    img = np.asarray(img)
-    dim1, dim2 = img.shape[0], img.shape[1]
-    img = img.reshape((dim1 * dim2, 3))
-    img = img.astype('float32') / 255
-    test_hot.append(img)
+train_imgs = np.vstack((hd_train_imgs, nhd_train_imgs))
 
-test_nothot = []
-for images in os.listdir('test/not_hot_dog'):
-    name = ''.join(['test/not_hot_dog/', images])
-    img = load_img(name)
-    img = smart_resize(img, (100, 100))
-    img = np.asarray(img)
-    dim1, dim2 = img.shape[0], img.shape[1]
-    img = img.reshape((dim1 * dim2, 3))
-    img = img.astype('float32') / 255
-    test_nothot.append(img)
+#|%%--%%| <5Qe1299RO7|XwRLJTg0XR>
+r"""°°°
+# We can shuffle the data and the labels
+°°°"""
+#|%%--%%| <XwRLJTg0XR|JnIvE31t2l>
 
-test = np.array(test_hot + test_nothot)
-test = test.reshape((test.shape[0], test.shape[1] * test.shape[2]))
+np.random.seed(1)
 
-test_labels = np.zeros(test.shape[0])
-# train_labels = np.array([1])
-for i in range(len(test_hot) - 1):
-    # train_labels = np.vstack((train_labels, np.ones(1)))
-    test_labels[i] = 1
+inds = np.linspace(0, train_imgs.shape[0] - 1, train_imgs.shape[0]).astype(int)
+np.random.shuffle(inds)
 
-print(model.evaluate(test, test_labels))
+labels = labels[inds]
+train_imgs = train_imgs[inds]
+
+#|%%--%%| <JnIvE31t2l|hwhsZ4shUZ>
+r"""°°°
+# View some of the images
+°°°"""
+#|%%--%%| <hwhsZ4shUZ|BbkSwiaUOr>
+
+fig, ax = plt.subplots(1, 2)
+ax[0].imshow(train_imgs[0])
+ax[0].set_title(f'label: {labels[0]}')
+ax[1].imshow(train_imgs[3])
+ax[1].set_title(f'label: {labels[3]}')
+plt.show()
+
+#|%%--%%| <BbkSwiaUOr|lHYbPYSwnn>
+r"""°°°
+# Lets define the model
+°°°"""
+#|%%--%%| <lHYbPYSwnn|dhKTgMDxYM>
+
+inputs = keras.Input(shape=(180, 180, 3))
+x = layers.Conv2D(filters=32, kernel_size=3, activation='relu')(inputs)
+x = layers.MaxPooling2D(pool_size=2)(x)
+x = layers.Conv2D(filters=64, kernel_size=3, activation='relu')(x)
+x = layers.MaxPooling2D(pool_size=2)(x)
+x = layers.Conv2D(filters=128, kernel_size=3, activation='relu')(x)
+x = layers.MaxPooling2D(pool_size=2)(x)
+x = layers.Conv2D(filters=256, kernel_size=3, activation='relu')(x)
+x = layers.MaxPooling2D(pool_size=2)(x)
+x = layers.Flatten()(x)
+outputs = layers.Dense(1, activation='sigmoid')(x)
+model = keras.Model(inputs, outputs)
+
+#|%%--%%| <dhKTgMDxYM|lLlnqfTk73>
+
+model.summary()
+
+#|%%--%%| <lLlnqfTk73|XZeW9U3tHI>
+
+model.compile(
+        loss='binary_crossentropy',
+        optimizer='adam',
+        metrics=['accuracy'])
+
+#|%%--%%| <XZeW9U3tHI|sGk3pX49uU>
+r"""°°°
+# Now lets fit the model to the training data
+°°°"""
+#|%%--%%| <sGk3pX49uU|KEI6P48kfu>
+
+history = model.fit(
+        train_imgs,
+        labels,
+        epochs=30,
+        shuffle=False,
+        validation_split=.1)
+
+#|%%--%%| <KEI6P48kfu|vxnRPIE1uT>
+
+model_path = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/Models/'
+model.save(model_path + 'base_model.keras')
+
+#|%%--%%| <vxnRPIE1uT|ujnmFgSn52>
+
+model = keras.models.load_model(model_path + 'base_model.keras')
+
+#|%%--%%| <ujnmFgSn52|NBNG45vIrF>
+r"""°°°
+# We now need to load the test data and evaluate the model
+°°°"""
+#|%%--%%| <NBNG45vIrF|abIB4ao9td>
+
+path_test_hd = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/test/hot_dog/'
+hd_test_imgs = []
+for img_name in os.listdir(path_test_hd):
+    img = load_img(path_test_hd + img_name).resize((180, 180))
+    hd_test_imgs.append(np.array(img, dtype='uint8') / 255.)
+hd_test_imgs = np.array(hd_test_imgs)
+
+path_test_nhd = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/test/not_hot_dog/'
+nhd_test_imgs = []
+for img_name in os.listdir(path_test_nhd):
+    img = load_img(path_test_nhd + img_name).resize((180, 180))
+    nhd_test_imgs.append(np.array(img, dtype='uint8') / 255.)
+nhd_test_imgs = np.array(nhd_test_imgs)
+
+test_imgs = np.vstack((hd_test_imgs, nhd_test_imgs))
+
+test_labels = np.zeros(test_imgs.shape[0])
+test_labels[: hd_test_imgs.shape[0]] = 1
+
+#|%%--%%| <abIB4ao9td|v8dNMD5dGy>
+
+model.evaluate(test_imgs, test_labels)

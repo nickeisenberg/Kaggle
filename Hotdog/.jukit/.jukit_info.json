@@ -1,0 +1,1 @@
+{"cmd": "model.evaluate(test_imgs, test_labels)", "cmd_opts": "", "import_complete": 1, "terminal": "nvimterm"}
