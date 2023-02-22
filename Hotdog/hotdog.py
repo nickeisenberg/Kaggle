@@ -2,6 +2,7 @@ from tensorflow.keras.preprocessing.image import load_img
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import tensorflow as tf
 from tensorflow import keras
 from keras import layers
 
@@ -29,7 +30,6 @@ nhd_train_imgs = np.array(nhd_train_imgs)
 
 hd_train_imgs.shape
 nhd_train_imgs.shape
-
 
 #|%%--%%| <yJUIH5E2kK|sZG31shZjK>
 r"""°°°
@@ -69,14 +69,30 @@ ax[1].imshow(train_imgs[3])
 ax[1].set_title(f'label: {labels[3]}')
 plt.show()
 
-#|%%--%%| <BbkSwiaUOr|lHYbPYSwnn>
+#|%%--%%| <BbkSwiaUOr|1qV7W1YXwA>
+r"""°°°
+# Before defining the model, we can create a data augmentation layer to help
+# the model since there is very little training data.
+°°°"""
+#|%%--%%| <1qV7W1YXwA|XUH53PLDD0>
+
+data_augmentation = keras.Sequential(
+        [
+            layers.RandomFlip('horizontal'),
+            layers.RandomRotation(.1),
+            layers.RandomZoom(.2)
+        ]
+)
+
+#|%%--%%| <XUH53PLDD0|lHYbPYSwnn>
 r"""°°°
 # Lets define the model
 °°°"""
 #|%%--%%| <lHYbPYSwnn|dhKTgMDxYM>
 
 inputs = keras.Input(shape=(180, 180, 3))
-x = layers.Conv2D(filters=32, kernel_size=3, activation='relu')(inputs)
+x = data_augmentation(inputs)
+x = layers.Conv2D(filters=32, kernel_size=3, activation='relu')(x)
 x = layers.MaxPooling2D(pool_size=2)(x)
 x = layers.Conv2D(filters=64, kernel_size=3, activation='relu')(x)
 x = layers.MaxPooling2D(pool_size=2)(x)
@@ -99,7 +115,21 @@ model.compile(
         optimizer='adam',
         metrics=['accuracy'])
 
-#|%%--%%| <XZeW9U3tHI|sGk3pX49uU>
+#|%%--%%| <XZeW9U3tHI|mkQwBXEkF0>
+r"""°°°
+# Lets create a callback to save the best model only.
+°°°"""
+#|%%--%%| <mkQwBXEkF0|SyCt6H1PXv>
+
+model_path = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/Models/'
+callbacks = [
+        keras.callbacks.ModelCheckpoint(
+            filepath=model_path + 'data_aug_base_model.keras',
+            save_best_only=True,
+            monitor='val_accuracy')
+        ]
+
+#|%%--%%| <SyCt6H1PXv|sGk3pX49uU>
 r"""°°°
 # Now lets fit the model to the training data
 °°°"""
@@ -110,18 +140,14 @@ history = model.fit(
         labels,
         epochs=30,
         shuffle=False,
+        callbacks=callbacks,
         validation_split=.1)
 
 #|%%--%%| <KEI6P48kfu|vxnRPIE1uT>
 
-model_path = '/Users/nickeisenberg/GitRepos/Kaggle/Hotdog/Models/'
-model.save(model_path + 'base_model.keras')
+model = keras.models.load_model(model_path + 'data_aug_base_model.keras')
 
-#|%%--%%| <vxnRPIE1uT|ujnmFgSn52>
-
-model = keras.models.load_model(model_path + 'base_model.keras')
-
-#|%%--%%| <ujnmFgSn52|NBNG45vIrF>
+#|%%--%%| <vxnRPIE1uT|NBNG45vIrF>
 r"""°°°
 # We now need to load the test data and evaluate the model
 °°°"""
