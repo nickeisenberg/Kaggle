@@ -1,4 +1,5 @@
 import pandas as pd
+from copy import deepcopy
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import keras
@@ -87,7 +88,6 @@ _ = ax[1].bar(x=range(1, 19), height=list(qu_avg.values()))
 _ = ax[1].set_xticks(range(1, 19))
 _ = ax[1].set_title('Question scores')
 plt.show()
-
 
 #|%%--%%| <P0jv5JL55X|UFPJGkiNrf>
 r"""°°°
@@ -193,8 +193,18 @@ question and so each question will have its own model.
 °°°"""
 #|%%--%%| <tjTqxuzD93|ELa3yxdYRy>
 
-def im_getter(df, ids, cols, verbose=False):
+def im_train_ids(df, qu_no):
+    bol_1_c = train_labels_sp['question'] == qu_no
+    bol_1_c *= train_labels_sp['correct'] == 1
+    bol_1_ic = train_labels_sp['question'] == qu_no
+    bol_1_ic *= train_labels_sp['correct'] == 0
+    qu_c = deepcopy(df.loc[bol_1_c])
+    qu_ic = deepcopy(df.loc[bol_1_ic])
+    return qu_c, qu_ic
+
+def im_train_set(df, group, ids, cols, verbose=False):
     ims = []
+    df = deepcopy(df.loc[df['level_group'] == group])
     for i, id in enumerate(ids):
         id_df = df.loc[df['session_id'] == id][cols].dropna()
         im = np.histogram2d(id_df[cols[0]].values, id_df[cols[1]].values, bins=50)
@@ -204,25 +214,24 @@ def im_getter(df, ids, cols, verbose=False):
                 print(i / ids.size)
     return ids, np.array(ims)
 
-bol_1_c = train_labels_sp['question'] == 1
-bol_1_c *= train_labels_sp['correct'] == 1
-bol_1_ic = train_labels_sp['question'] == 1
-bol_1_ic *= train_labels_sp['correct'] == 0
-qu1_c = train_labels_sp.loc[bol_1_c]
-qu1_ic = train_labels_sp.loc[bol_1_ic]
+qu1_c, qu1_ic = im_train_ids(df=train_labels_sp, qu_no=1)
 
 cols = ['room_coor_x', 'room_coor_y']
-ids_c, ims_c = im_getter(train_set, qu1_c['session_id'].values[:10],
-                         cols,
-                         verbose=True)
-ids_ic, ims_ic = im_getter(train_set, qu1_ic['session_id'].values[:10],
-                           cols,
-                           verbose=True)
+
+ids_c, ims_c = im_train_set(df=train_set,
+                            group='0-4',
+                            ids=qu1_c['session_id'].values,
+                            cols=cols,
+                            verbose=True)
+
+ids_ic, ims_ic = im_train_set(df=train_set,
+                              group='0-4',
+                              ids=qu1_ic['session_id'].values,
+                              cols=cols,
+                              verbose=True)
 
 train_ims_qu1 = np.vstack((ims_c, ims_ic))
 train_labels_qu1 = np.hstack((np.ones(ids_c.size), np.zeros(ids_ic.size)))
-
-train_ims_qu1.shape
 
 #|%%--%%| <ELa3yxdYRy|sE2vnBz8Z0>
 r"""°°°
@@ -230,15 +239,14 @@ Lets reshape the images into 3d tensors
 °°°"""
 #|%%--%%| <sE2vnBz8Z0|5PLhyIDrsC>
 
-stacked_ims = ims_c.reshape(np.hstack((ims_c.shape, 1)))
+train_ims_qu1 = train_ims_qu1.reshape(np.hstack((train_ims_qu1.shape, 1)))
 
-stacked_ims.shape
+train_ims_qu1.shape
 
 fig, ax = plt.subplots(1, 2)
-ax[0].imshow(stacked_ims[0])
+ax[0].imshow(train_ims_qu1[0])
 ax[1].imshow(ims_c[0])
 plt.show()
-
 
 #|%%--%%| <5PLhyIDrsC|DSFfc2SC0m>
 r"""°°°
@@ -246,18 +254,41 @@ Now lets define the model.
 °°°"""
 #|%%--%%| <DSFfc2SC0m|RGqk0Pxw40>
 
+# inputs = keras.Input(shape=(50, 50, 1))
+# x = layers.Conv2D(filters=32, kernel_size=3, activation='relu')(inputs)
+# x = layers.MaxPooling2D(pool_size=2)(x)
+# x = layers.Conv2D(filters=64, kernel_size=3, activation='relu')(x)
+# x = layers.MaxPooling2D(pool_size=2)(x)
+# x = layers.Conv2D(filters=128, kernel_size=3, activation='relu')(x)
+# x = layers.MaxPooling2D(pool_size=2)(x)
+# x = layers.Conv2D(filters=256, kernel_size=3, activation='relu')(x)
+# x = layers.MaxPooling2D(pool_size=2)(x)
+# x = layers.Flatten()(x)
+# outputs = layers.Dense(1, activation='sigmoid')(x)
+# model = keras.Model(inputs, outputs)
+# 
+# model.summary()
+# 
+# model.compile(
+#         loss='binary_crossentropy',
+#         optimizer='adam',
+#         metrics=['accuracy'])
+# 
+# model_path = '/Users/nickeisenberg/GitRepos/Kaggle/'
+# model_path += 'Game_Performace_Prediction/Models/'
+# callbacks = [
+#         keras.callbacks.ModelCheckpoint(
+#             filepath=model_path + 'cnn_model.keras',
+#             save_best_only=True,
+#             monitor='val_accuracy')
+#         ]
+
 inputs = keras.Input(shape=(50, 50, 1))
-x = layers.Conv2D(filters=32, kernel_size=3, activation='relu')(inputs)
-x = layers.MaxPooling2D(pool_size=2)(x)
-x = layers.Conv2D(filters=64, kernel_size=3, activation='relu')(x)
-x = layers.MaxPooling2D(pool_size=2)(x)
-x = layers.Conv2D(filters=128, kernel_size=3, activation='relu')(x)
-x = layers.MaxPooling2D(pool_size=2)(x)
-x = layers.Conv2D(filters=256, kernel_size=3, activation='relu')(x)
-x = layers.MaxPooling2D(pool_size=2)(x)
-x = layers.Flatten()(x)
-outputs = layers.Dense(1, activation='sigmoid')(x)
-model = keras.Model(inputs, outputs)
+x = keras.layers.Flatten()(inputs)
+x = keras.layers.Dense(128, activation='relu')(x)
+x = keras.layers.Dense(64, activation='relu')(x)
+output = keras.layers.Dense(1, activation='sigmoid')(x)
+model = keras.Model(inputs, output)
 
 model.summary()
 
@@ -270,32 +301,59 @@ model_path = '/Users/nickeisenberg/GitRepos/Kaggle/'
 model_path += 'Game_Performace_Prediction/Models/'
 callbacks = [
         keras.callbacks.ModelCheckpoint(
-            filepath=model_path + 'cnn_model.keras',
+            filepath=model_path + 'dense_model.keras',
             save_best_only=True,
             monitor='val_accuracy')
         ]
 
+#|%%--%%| <RGqk0Pxw40|kVN5CNvaPs>
+
+np.random.seed(10)
+shuffled_inds = np.arange(0, train_labels_qu1.size, 1)
+np.random.shuffle(shuffled_inds)
+
+t_set = train_ims_qu1[shuffled_inds]
+t_set_lab = train_labels_qu1[shuffled_inds]
+
+tr_ind = int(shuffled_inds.size * .6)
+val_ind = int(shuffled_inds.size * .2)
+
+tr = t_set[: tr_ind]
+tr_lab = t_set_lab[: tr_ind]
+val = t_set[tr_ind: tr_ind + val_ind]
+val_lab = t_set_lab[tr_ind: tr_ind + val_ind]
+test = t_set[tr_ind + val_ind:]
+test_lab = t_set_lab[tr_ind + val_ind:]
+
+#|%%--%%| <kVN5CNvaPs|IgAzCxiC3V>
+
 history = model.fit(
-        stacked_ims,
-        train_labels_qu1,
-        epochs=1,
+        tr,
+        tr_lab,
+        validation_data=(val, val_lab),
+        epochs=200,
         shuffle=False,
-        callbacks=callbacks,
-        validation_split=.1)
+        callbacks=callbacks)
 
-model = keras.models.load_model(model_path + 'cnn_model.keras')
+# model = keras.models.load_model(model_path + 'cnn_model.keras')
+model = keras.models.load_model(model_path + 'dense_model.keras')
 
-#|%%--%%| <RGqk0Pxw40|4ugzqFldN4>
+#|%%--%%| <IgAzCxiC3V|4ugzqFldN4>
 r"""°°°
-Lets create the test set
+Lets test the model
 °°°"""
 #|%%--%%| <4ugzqFldN4|oCiFt3obYO>
 
+test.shape
+test_lab.shape
 
-test_ids = test_set['session_id'].value_counts().index.values
-cols = ['room_coor_x', 'room_coor_y']
-test_ids, test_ims = im_getter(test_set, test_ids, cols, verbose=True)
+preds = model.predict(test)
+preds *= 2
+preds = preds.astype(int)
 
-test_ims = test_ims.reshape(np.hstack((test_ims.shape, 1)))
-
-model.predict(test_ims)
+score = np.abs(preds.reshape(-1) - test_lab).mean()
+score
+#|%%--%%| <oCiFt3obYO|sOA8lN9kCE>
+r"""°°°
+Both models performed badly. Need to try something else.
+°°°"""
